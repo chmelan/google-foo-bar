@@ -5,6 +5,9 @@ def solution(s):
 
     """Find the amount of times the smallest subsequence of a sequence repeats without remainders 
 
+    Time Complexity:
+        O(n/2)
+        
     Parameters:
         s (str): Sequence of letters
     
