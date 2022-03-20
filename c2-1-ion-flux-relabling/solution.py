@@ -1,54 +1,27 @@
-def solution(h, q):
-
-    """Finds the parent of each child node in a list of nodes that belong to a perfect binary tree
-
+def solution(x,y):
+    """Find the id of a bunny worker given a pair of coordinates
+    
     Time Complexity:
-        O(n log n)
-        
+    O(1)
+
     Parameters:
-        h (int): Height of the binary tree
-        q (list of int): List of node positions
-    
+        x (int): Distance from vertical wall
+        y (int): Height from ground
+
     Returns:
-        parent_nodes (list of int): List of parent node positions, root nodes return -1
+        id (str): id of bunny
     """
+
+
+    y_diff = y - 1
     
-    
-    parent_nodes = []
+    # find width of the nearest corner
+    x_corner = x + y_diff
 
-    # find the max number of nodes in a perfect binary tree of height h
-    max_nodes = 2**h - 1
+    # Calculate the arithmatic sum of the x sequence 
+    id = x_corner * (x_corner + 1) / 2
 
-    # loop over node list and return parent node
-    for node in q:
+    # Move diagonally to compensate for y 
+    id -= y_diff
 
-        end_node =  max_nodes
-        start_node = 1
-
-        # check if current node is the end node 
-        if end_node == node:
-            parent_nodes.append(-1)
-            continue 
-
-        # loop over tree until the parent node is found
-        while (node >= 1):
-
-            end_node = end_node -1
-
-            #find the midpoint of the tree
-            mid_node = start_node + (end_node - start_node)/2
-            
-            #if the node has been found, add it to the parent_nodes list and end the loop 
-            if (mid_node == node or end_node == node):
-                parent_nodes.append(end_node + 1)
-                break
-            
-            # if the node is less than the mid_node search the left subtree 
-            elif(node < mid_node):
-                end_node = mid_node
-                
-            # otherwise, search the the right subtree 
-            else:
-                start_node = mid_node
-
-    return parent_nodes
+    return str(id)
