@@ -1,20 +1,4 @@
-import pprint
-
 from fractions import Fraction, gcd
-
-pp = pprint.PrettyPrinter(indent=4)
-
-
-transition_matrix = [[0, 7, 0, 17, 0, 1, 0, 5, 0, 2],
-[0, 0, 29, 0, 28, 0, 3, 0, 16, 0],
-[0, 3, 0, 0, 0, 1, 0, 0, 0, 0],
-[48, 0, 3, 0, 0, 0, 17, 0, 0, 0],
-[0, 6, 0, 0, 0, 1, 0, 0, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 def num_of_transients(m):
     if len(m) == 0:
@@ -66,15 +50,6 @@ def identity(t):
             r.append(int(i == j))
         m.append(r)
     return m
-
-# check if the matrix is zero
-def isZero(m):
-    for r in range(len(m)):
-        for c in range(len(m[r])):
-            if m[r][c] != 0:
-                return False
-    return True
-
 
 # swap i,j rows/columns of a square matrix `m`
 def swap(m, i, j):
@@ -141,7 +116,6 @@ def normalize(m, use_fractions=False ):
             nRow = m[r]
         else:
             for c in range(cols):
-                # FIXME it's strange but python 2.7 does not automatically convert decimals to floats
                 if use_fractions:
                     nRow.append(Fraction(m[r][c], sum))
                 else:
@@ -249,20 +223,19 @@ def solution(m):
     """Find the probabilty of reaching a set of terminal states, given an absorbing markov matrix
     
     Arguments:
-        m (list:list:int): A transition matrix containing non-negative ints. Max size is 10 x 10
-        Each sub list represents the state of the object. 
-            [
-            [0,1,0,0,0,1], 
-            [4,0,0,3,2,0],  
-            [0,0,0,0,0,0],  
-            [0,0,0,0,0,0],  
-            [0,0,0,0,0,0],  
-            [0,0,0,0,0,0],  
-            ]
+        m (list:list:int): A transition matrix containing non-negative ints. 
+         e.g.   [
+                [0,1,0,0,0,1], 
+                [4,0,0,3,2,0],  
+                [0,0,0,0,0,0],  
+                [0,0,0,0,0,0],  
+                [0,0,0,0,0,0],  
+                [0,0,0,0,0,0],  
+                ]
     
     Returns:
         probabilities (list: int): The list of numerators of probabilities for
-             each state, with the last int being the common denominator
+            each terminal state, with the last int being the common denominator
 
             e.g. [1,3,5,7] == 1/7, 3/7, 5/7
 
@@ -271,47 +244,46 @@ def solution(m):
     
         Mathematical concepts are pulled from legolord208's article on dev.to https://dev.to/legolord208/absorbing-markov-chains-how-do-they-work-46
     """
-
-    if isZero(m):
-        return [1,1]
-    #check for a 1x1 matrix
+    # check for a 1x1 matrix edge case
     if len(m) < 2:
         return [1,1]
+        
+    # <-------find the probability of reaching each terminal state------->
+    
 
-    # normalize matrix
-    m_normalized = normalize(m)
+    # normalize and sort matrix with transient states preceding terminal states 
+    m_normalized = normalize(sort(m))
 
     # decompose the matrix -> get q and R
-    
     Q, R = decompose(m_normalized)
-
 
     # create an identity matrix of Q
     Q_identity = identity(len(Q))
 
-    #Create fundamental matrix
+    # create fundamental matrix
     N = getMatrixInverse((subtract(Q_identity, Q)))
 
-    # Find the average number of steps to reach each absorbing state
+    # find the average number of steps to reach each terminal state
     B = multiply(N, R)
 
-    # <-------Convert the output to the desired format------->
-    to_fraction = [Fraction(i).limit_denominator() for i in B[0]]
+    # <-------convert the output to the desired format------->
+
+    # convert probabilities to fractions
+    fractional_probabilities = [Fraction(i).limit_denominator() for i in B[0]]
     lcd = 1
     probabilities = []
 
-    # find the lcd of all absorbing states
-    for d in to_fraction[1:]:
-        lcd = lcd // gcd(lcd, d.denominator) * d.denominator
+    # find the lcd of all terminal states
+    for prob in fractional_probabilities [1:]:
+        lcd = lcd // gcd(lcd, prob.denominator) * prob.denominator
     
-    # multiply each absorbing state by the factor needed to convert it to the LCD 
+    # multiply each terminal state by the factor needed to convert it to the LCD 
     # then append it to the probability list
     for i in range(len(B[0])):
-        probabilities.append( int((float(lcd) / to_fraction[i].denominator) * to_fraction[i].numerator))
+        probabilities.append( int((float(lcd) / fractional_probabilities [i].denominator) * fractional_probabilities [i].numerator))
 
-     # append the LCD to the end of the probability list    
+    # append the LCD to the end of the probability list    
     probabilities.append(lcd)
 
     
     return probabilities
-pp.pprint(solution(transition_matrix))
