@@ -1,19 +1,20 @@
-
 import pprint
-from fractions import Fraction
+
+from fractions import Fraction, gcd
 
 pp = pprint.PrettyPrinter(indent=4)
 
 
-
-transition_matrix = [
-            [0,1,0,0,0,1], 
-            [4,0,0,3,2,0],  
-            [0,0,0,0,0,0],  
-            [0,0,0,0,0,0],  
-            [0,0,0,0,0,0],  
-            [0,0,0,0,0,0],  
-            ]
+transition_matrix = [[0, 7, 0, 17, 0, 1, 0, 5, 0, 2],
+[0, 0, 29, 0, 28, 0, 3, 0, 16, 0],
+[0, 3, 0, 0, 0, 1, 0, 0, 0, 0],
+[48, 0, 3, 0, 0, 0, 17, 0, 0, 0],
+[0, 6, 0, 0, 0, 1, 0, 0, 0, 0],
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 def num_of_transients(m):
     if len(m) == 0:
@@ -205,6 +206,9 @@ def getMatrixMinor(m,i,j):
 
 # matrix determinant
 def getMatrixDeternminant(m):
+    #base case for 1x1 matrix
+    if len(m) == 1:
+        return m[0][0]
     #base case for 2x2 matrix
     if len(m) == 2:
         return m[0][0]*m[1][1]-m[0][1]*m[1][0]
@@ -242,7 +246,7 @@ def getMatrixInverse(m):
     return cofactors
 
 def solution(m):
-    """
+    """Find the probabilty of reaching a set of terminal states, given an absorbing markov matrix
     
     Arguments:
         m (list:list:int): A transition matrix containing non-negative ints. Max size is 10 x 10
@@ -268,12 +272,14 @@ def solution(m):
         Mathematical concepts are pulled from legolord208's article on dev.to https://dev.to/legolord208/absorbing-markov-chains-how-do-they-work-46
     """
 
+    if isZero(m):
+        return [1,1]
     #check for a 1x1 matrix
     if len(m) < 2:
         return [1,1]
 
-    #convert matrix entries into fractions (normalize them)
-    m_normalized = normalize(m, True)
+    # normalize matrix
+    m_normalized = normalize(m)
 
     # decompose the matrix -> get q and R
     
@@ -289,30 +295,23 @@ def solution(m):
     # Find the average number of steps to reach each absorbing state
     B = multiply(N, R)
 
+    # <-------Convert the output to the desired format------->
+    to_fraction = [Fraction(i).limit_denominator() for i in B[0]]
+    lcd = 1
+    probabilities = []
 
-
-    #<-------- Mostly original code here ---->
-    # Convert the output to the desired format
-
-    # find the least_common_denominator(LCD) of each state_probability
-
-    # create a list of denominators
-    denominators = []
-    for c in B[0]:
-        denominators.append(c.denominator)
-
-
-    # multiple state_probability by the factor needed to convert it to the LCD
-    # append this number to the list
-    # append the LCD to the end of the list
+    # find the lcd of all absorbing states
+    for d in to_fraction[1:]:
+        lcd = lcd // gcd(lcd, d.denominator) * d.denominator
     
-    #Return the list
+    # multiply each absorbing state by the factor needed to convert it to the LCD 
+    # then append it to the probability list
+    for i in range(len(B[0])):
+        probabilities.append( int((float(lcd) / to_fraction[i].denominator) * to_fraction[i].numerator))
 
+     # append the LCD to the end of the probability list    
+    probabilities.append(lcd)
 
-
-    # submatrix for non-absorbing -> absorbing
-   
-
-    return denominators
-
+    
+    return probabilities
 pp.pprint(solution(transition_matrix))
